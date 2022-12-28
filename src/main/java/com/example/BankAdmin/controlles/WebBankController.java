@@ -23,7 +23,7 @@ public class WebBankController {
     }
 
     @DeleteMapping("/delete")
-    public Mono<String> delete(@RequestParam Integer idBank,
+    public Mono<BankDto> delete(@RequestParam Integer idBank,
                                @RequestHeader (HttpHeaders.AUTHORIZATION) String token) {
         token = token.substring(7);
         return webBankService.delete(idBank, token);

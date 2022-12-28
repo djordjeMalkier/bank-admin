@@ -30,7 +30,7 @@ public class WebBankService {
                 .bodyToMono(BankDto.class);
     }
 
-    public Mono<String> delete(Integer idBank, String token) {
+    public Mono<BankDto> delete(Integer idBank, String token) {
         return webClient.delete()
                 .uri(uriBuilder -> uriBuilder
                         .path("/bank/delete")
@@ -38,7 +38,7 @@ public class WebBankService {
                         .build())
                 .headers(h -> h.setBearerAuth(token))
                 .retrieve()
-                .bodyToMono(String.class);
+                .bodyToMono(BankDto.class);
     }
 
     public Mono<String> auth(AuthenticationRequest authDTO) {
