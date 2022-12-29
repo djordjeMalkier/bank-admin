@@ -9,6 +9,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 
@@ -33,7 +34,7 @@ public class RequestAOP {
         @SuppressWarnings("unchecked cast")
         Mono<BankDto> bankDtoMono = (Mono<BankDto>) joinPoint.proceed();
 
-        return bankDtoMono.doOnSuccess(
+        return bankDtoMono.publishOn(Schedulers.boundedElastic()).doOnSuccess(
             bank -> {
                 log.info("Successfully LOG in Mongo DB");
 
