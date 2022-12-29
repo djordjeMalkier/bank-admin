@@ -6,9 +6,7 @@ import com.example.BankAdmin.repository.RequestRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -22,34 +20,32 @@ public class RequestAOP {
 
     private final RequestRepository requestRepository;
 
-    @Pointcut("this(com.example.BankAdmin.controlles.WebBankController)")
-    public void pointcut(){
+    @Pointcut("execution(* com.example.BankAdmin.controlles.WebBankController.create(..))"
+         + "|| execution(* com.example.BankAdmin.controlles.WebBankController.delete(..))")
+    public void pointcut() {
 
     }
 
-    @Around("pointcut()")
-    public Object after(ProceedingJoinPoint joinPoint) {
-        Mono<BankDto> bankDtoMono = null;
 
-        try {
-            bankDtoMono = (Mono<BankDto>) joinPoint.proceed();
+    @Around(value = "pointcut()")
+    public Mono<BankDto> after(ProceedingJoinPoint joinPoint) throws Throwable {
 
-            bankDtoMono.subscribe(
-                bank ->
-                    requestRepository.insert(
-                        Request.builder()
-                            .method(joinPoint.getSignature().getName())
-                            .bankId(bank.getIdBank())
-                            .bankName(bank.getName())
-                            .bankAddress(bank.getAddress())
-                            .createdTime(LocalDateTime.now())
-                            .build())
-            );
+        @SuppressWarnings("unchecked cast")
+        Mono<BankDto> bankDtoMono = (Mono<BankDto>) joinPoint.proceed();
 
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+        return bankDtoMono.doOnSuccess(
+            bank -> {
+                log.info("Successfully LOG in Mongo DB");
 
-        return bankDtoMono;
-   }
+                requestRepository.insert(
+                    Request.builder()
+                        .method(joinPoint.getSignature().getName())
+                        .bankId(bank.getIdBank())
+                        .bankName(bank.getName())
+                        .bankAddress(bank.getAddress())
+                        .createdTime(LocalDateTime.now())
+                        .build());
+            }
+        );
+    }
 }
